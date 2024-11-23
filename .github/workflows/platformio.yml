@@ -24,6 +24,10 @@ jobs:
             - name: Set up PlatformIO
               run: python3 -m pip install platformio
 
+            #   copy include/JMCredentials.example.hpp to include/JMCredentials.hpp
+            - name: Copy JMCredentials.example.hpp to JMCredentials.hpp
+              run: cp include/JMCredentials.example.hpp include/JMCredentials.hpp
+
             - name: Install platformIO dependencies
               run: platformio pkg install
 
