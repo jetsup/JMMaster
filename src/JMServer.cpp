@@ -62,3 +62,110 @@ String processor(const String &var) {
   }
   return String();
 }
+
+//
+void apiControlAppliances(AsyncWebServerRequest *request, uint8_t *data,
+                          size_t len, size_t index, size_t total) {
+  ArduinoJson::JsonDocument doc;
+  ArduinoJson::DeserializationError error = deserializeJson(doc, data, len);
+
+  DEBUG_PRINTF("Data: %s\n", data);
+
+  if (error) {
+    request->send(400, "text/plain", "Invalid JSON body");
+    return;
+  }
+
+  String rawAppliances = doc["appliances"];  // eg. "1,2,3"
+  String rawValues = doc["values"];          // eg. "1,0,1"
+  String rawIsDigital = doc["signals"];      // eg. "1,0,1"
+
+  std::vector<String> applianceControlPins = splitStr(rawAppliances, ",");
+  std::vector<String> applianceValues = splitStr(rawValues, ",");
+  std::vector<String> applianceSignals = splitStr(rawIsDigital, ",");
+
+  int boardPins[applianceControlPins.size()];
+  int writeValues[applianceValues.size()];
+  int isDigital[applianceSignals.size()];
+
+  for (int i = 0; i < applianceControlPins.size(); i++) {
+    // Validate pin and state
+    if (applianceControlPins.at(i).toInt() != 2 &&
+        applianceControlPins.at(i).toInt() != 4 &&
+        applianceControlPins.at(i).toInt() != 33) {
+      DEBUG_PRINTF("Invalid pin number: %d\n",
+                   applianceControlPins.at(i).toInt());
+
+      request->send(400, "text/plain",
+                    "Invalid pin number: '" + applianceControlPins.at(i) + "'");
+      return;
+    }
+    if (applianceValues.at(i).toInt() != 0 &&
+        applianceValues.at(i).toInt() != 1) {
+      DEBUG_PRINTF("Invalid state value: %d\n", applianceValues.at(i).toInt());
+      request->send(400, "text/plain",
+                    "Invalid state value: '" + applianceValues.at(i) + "'");
+      return;
+    }
+
+    boardPins[i] = applianceControlPins.at(i).toInt();
+    writeValues[i] = applianceValues.at(i).toInt();
+    isDigital[i] = applianceSignals.at(i).toInt();
+  }
+
+  for (int i = 0; i < applianceControlPins.size(); i++) {
+    // Update appliance values
+    if (isDigital[i] == 1) {
+      digitalWrite(boardPins[i], writeValues[i]);
+    } else if (isDigital[i] == 0) {
+      analogWrite(boardPins[i], writeValues[i]);
+    }
+  }
+
+  request->send(200, "text/plain", "OK");
+}
+
+void apiControlAppliance(AsyncWebServerRequest *request, uint8_t *data,
+                         size_t len, size_t index, size_t total) {
+  ArduinoJson::JsonDocument doc;
+  ArduinoJson::DeserializationError error = deserializeJson(doc, data, len);
+
+  DEBUG_PRINTF("Len: '%d' Data: '%s'\n", len, data);
+
+  if (error) {
+    request->send(400, "text/plain", "Invalid JSON body");
+    return;
+  }
+
+  String strAppliance = doc["appliance"];
+  String strValue = doc["value"];
+  String strIsDigital = doc["signal"];
+
+  int appliance = strAppliance.toInt();
+  int value = strValue.toInt();
+  int isDigital = strIsDigital.toInt();
+
+  DEBUG_PRINTF("A: '%d' V: '%d' D: '%d'\n", appliance, value, isDigital);
+
+  if (isDigital == 1) {
+    digitalWrite(appliance, value);
+  } else if (isDigital == 0) {
+    analogWrite(appliance, value);
+  }
+
+  DEBUG_PRINTLN("Sending response");
+  request->send(200, "text/plain", "OK");
+}
+
+void sendSystemStats(AsyncWebServerRequest *request) {
+  // Update logic
+  ArduinoJson::JsonDocument doc;
+
+  doc["led2"] = digitalRead(2);
+  doc["led4"] = digitalRead(4);
+  doc["led33"] = digitalRead(33);
+
+  String response;
+  serializeJson(doc, response);
+  request->send(200, "application/json", response);
+}

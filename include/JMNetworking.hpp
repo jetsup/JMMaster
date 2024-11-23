@@ -5,8 +5,8 @@
 #include <WiFi.h>
 #include <strings.h>
 
-#include <JMCredentials.hpp>
 #include <JMConfig.hpp>
+#include <JMCredentials.hpp>
 #include <JMEnums.hpp>
 
 class Networking {
@@ -21,6 +21,8 @@ class Networking {
 
   bool isConnected = false;
   NetworkStatus networkStatus = NetworkStatus::DISCONNECTED;
+
+  int previousRetryTime = 0;
 
  public:
   /**
@@ -42,6 +44,12 @@ class Networking {
    * Connect to the network using the already set ssid and password
    */
   void connect();
+
+  /**
+   * Try to reconnect to the network
+   * @param retryTimeout Time before trying to connect to the network [in ms]
+   */
+  void reconnect(int retryTimeout = WIFI_RECONNECTION_TIMEOUT);
 
   /**
    * Disconnect from the network

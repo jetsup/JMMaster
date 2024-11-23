@@ -18,13 +18,24 @@ void Networking::connect() {
   mdns_instance_name_set(hostname.c_str());
 
   networkStatus = NetworkStatus::CONNECTING;
-  DEBUG_PRINTF("Connecting to '%s'['%s']\n", ssid.c_str(), password.c_str());
+  previousRetryTime = millis();
+
+  DEBUG_PRINTF("Connecting to '%s'['%s'] - Hostname: '%s'\n", ssid.c_str(),
+               password.c_str(), hostname.c_str());
+}
+
+void Networking::reconnect(int retryTimeout) {
+  if (!isConnectedToNetwork()) {
+    if (millis() - previousRetryTime > retryTimeout) {
+      connect();
+      previousRetryTime = millis();
+    }
+  }
 }
 
 void Networking::disconnect() {
   WiFi.disconnect();
   networkStatus = NetworkStatus::DISCONNECTED;
-  DEBUG_PRINTLN("Disconnected from network");
 }
 
 bool Networking::isConnectedToNetwork() {

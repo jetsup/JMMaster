@@ -5,6 +5,7 @@
 #include <JMConfig.hpp>
 #include <JMNetworking.hpp>
 #include <JMServer.hpp>
+#include <JMUtils.hpp>
 
 // Multi core support
 extern TaskHandle_t Task1;
@@ -25,5 +26,3 @@ void monitoringTask(void *pvParameters);
  * @param pvParameters The parameters to pass to the task
  */
 void executorTask(void *pvParameters);
-
-

@@ -15,21 +15,13 @@ void monitoringTask(void *pvParameters) {
       DEBUG_PRINTLN("Not connected to network");
     }
 
-    if (millis() - prevLogTime > 10000) {
-      DEBUG_PRINTF("Network Status: '%d'\n", network.getNetworkStatus());
-      network.getIpAddress();
-      prevLogTime = millis();
-    }
-    DEBUG_PRINTF("Network Status: '%d'\n", network.getNetworkStatus());
-    network.getIpAddress();
-    delay(5000);
+    network.reconnect(5000);
+    delay(10);
   }
 }
 
 void executorTask(void *pvParameters) {
   long counter = 0;
-  while (true) { 
+  while (true) {
   }
 }
-
-//

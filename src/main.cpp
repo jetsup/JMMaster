@@ -5,8 +5,8 @@ TaskHandle_t Task2;
 Networking network;
 AsyncWebServer server(JM_PORT);
 
-const char* PARAM_INPUT_1 = "output";
-const char* PARAM_INPUT_2 = "state";
+const char *PARAM_INPUT_1 = "output";
+const char *PARAM_INPUT_2 = "state";
 
 void setup() {
   if (DEBUG) {
@@ -29,13 +29,13 @@ void setup() {
   xTaskCreatePinnedToCore(executorTask, "L2", 10000, NULL, 1, &Task2, 1);
 
   // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send_P(200, "text/html", index_html, processor);
   });
 
   // Send a GET request to
   // <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
-  server.on("/update", HTTP_GET, [](AsyncWebServerRequest* request) {
+  server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
     String inputMessage1;
     String inputMessage2;
     // GET input1 value on
@@ -54,6 +54,23 @@ void setup() {
     Serial.println(inputMessage2);
     request->send(200, "text/plain", "OK");
   });
+
+  server.on("/stats", HTTP_GET, sendSystemStats);
+
+  server.on(
+      "/toggle", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL,
+      [](AsyncWebServerRequest *request, uint8_t *data, size_t len,
+         size_t index, size_t total) {
+        apiControlAppliances(request, data, len, index, total);
+      });
+
+  server.on(
+      "/update-appliance", HTTP_POST, [](AsyncWebServerRequest *request) {},
+      NULL,
+      [](AsyncWebServerRequest *request, uint8_t *data, size_t len,
+         size_t index, size_t total) {
+        apiControlAppliance(request, data, len, index, total);
+      });
 
   // Start server
   server.begin();
